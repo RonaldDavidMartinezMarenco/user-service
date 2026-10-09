@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.foodcourt.user.domain.exception.EmailAlreadyRegistered;
 import com.foodcourt.user.domain.exception.IdentityDocumentAlreadyRegistered;
 import com.foodcourt.user.domain.exception.UnderageOwner;
+import com.foodcourt.user.domain.exception.UserNotFound;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -19,6 +20,11 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(UserNotFound.class)
+    ProblemDetail missing(UserNotFound exception, HttpServletRequest request) {
+        return problem(HttpStatus.NOT_FOUND, "User not found", exception, request);
+    }
 
     @ExceptionHandler(UnderageOwner.class)
     ProblemDetail underage(UnderageOwner exception, HttpServletRequest request) {

@@ -1,6 +1,7 @@
 package com.foodcourt.user.infrastructure.output.jpa.adapter;
 
 import java.sql.SQLException;
+import java.util.Optional;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,12 @@ public class UserRepositoryAdapter implements UserRepository {
 
     public UserRepositoryAdapter(UserJpaRepository accounts) {
         this.accounts = accounts;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<User> findById(long id) {
+        return accounts.findById(id).map(mapper::toDomain);
     }
 
     @Override

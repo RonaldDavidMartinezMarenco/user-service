@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,20 @@ class UserRepositoryAdapterTest {
     @BeforeEach
     void setUp() {
         adapter = new UserRepositoryAdapter(accounts);
+    }
+
+    @Test
+    void findByIdReturnsTheAccount() {
+        when(accounts.findById(15L)).thenReturn(Optional.of(row(15L, (short) 2)));
+
+        assertThat(adapter.findById(15L)).contains(ownerWithId(15L));
+    }
+
+    @Test
+    void findByIdIsEmptyWhenTheRowIsMissing() {
+        when(accounts.findById(9L)).thenReturn(Optional.empty());
+
+        assertThat(adapter.findById(9L)).isEmpty();
     }
 
     @Test
@@ -117,8 +132,12 @@ class UserRepositoryAdapterTest {
     }
 
     private static User owner() {
+        return ownerWithId(null);
+    }
+
+    private static User ownerWithId(Long id) {
         return new User(
-                null,
+                id,
                 "María",
                 "Ana2",
                 "1234567890",
@@ -127,6 +146,20 @@ class UserRepositoryAdapterTest {
                 "ana@example.com",
                 "hashed-secret12",
                 Role.OWNER,
+                null);
+    }
+
+    private static UserEntity row(Long id, short roleId) {
+        return new UserEntity(
+                id,
+                "María",
+                "Ana2",
+                "1234567890",
+                "+573005698325",
+                LocalDate.of(1990, 5, 1),
+                "ana@example.com",
+                "hashed-secret12",
+                roleId,
                 null);
     }
 }
