@@ -13,8 +13,8 @@ import jakarta.validation.constraints.Size;
  * The client does not send a role or a restaurant id.
  */
 public record CreateOwnerRequest(
-        @NotBlank @Pattern(regexp = ".*\\p{L}.*") String firstName,
-        @NotBlank @Pattern(regexp = ".*\\p{L}.*") String lastName,
+        @NotBlank @Size(max = 80) @Pattern(regexp = "^(?=.*\\p{L})[\\p{L}\\p{N} &'.,-]+$") String firstName,
+        @NotBlank @Size(max = 80) @Pattern(regexp = "^(?=.*\\p{L})[\\p{L}\\p{N} &'.,-]+$") String lastName,
         @NotBlank @Pattern(regexp = "^[0-9]+$") String identityDocument,
         @NotBlank @Size(max = 13) @Pattern(regexp = "^\\+?[0-9]+$") String phone,
         @NotNull LocalDate birthDate,

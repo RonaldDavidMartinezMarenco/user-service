@@ -31,6 +31,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import com.foodcourt.user.application.handler.CreateOwnerHandler;
 import com.foodcourt.user.domain.exception.EmailAlreadyRegistered;
 import com.foodcourt.user.domain.exception.IdentityDocumentAlreadyRegistered;
+import com.foodcourt.user.domain.exception.InvalidPersonName;
 import com.foodcourt.user.domain.exception.UnderageOwner;
 import com.foodcourt.user.domain.model.NewOwner;
 import com.foodcourt.user.domain.model.Role;
@@ -95,6 +96,18 @@ class OwnerControllerTest {
     }
 
     @Test
+    void createRejectsAnInvalidPersonName() throws Exception {
+        when(handler.create(any(NewOwner.class))).thenThrow(new InvalidPersonName());
+
+        postOwner(validBody("ana@example.com", "secret12", "María", "Ana2"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Invalid person name"))
+                .andExpect(jsonPath("$.detail").value("The name must contain a letter and only the allowed characters"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
     void createRejectsAnUnderageOwner() throws Exception {
         when(handler.create(any(NewOwner.class))).thenThrow(new UnderageOwner());
 
@@ -146,6 +159,9 @@ class OwnerControllerTest {
                 Arguments.of("password longer than 72", validBody("ana@example.com", "a".repeat(73), "María", "Ana2")),
                 Arguments.of("first name without a letter", validBody("ana@example.com", "secret12", "123", "Ana2")),
                 Arguments.of("last name without a letter", validBody("ana@example.com", "secret12", "María", "123")),
+                Arguments.of("first name with a sign", validBody("ana@example.com", "secret12", "Ana!", "Ana2")),
+                Arguments.of("symbols only", validBody("ana@example.com", "secret12", "***", "Ana2")),
+                Arguments.of("first name longer than 80", validBody("ana@example.com", "secret12", "A".repeat(81), "Ana2")),
                 Arguments.of("malformed birth date", validBody("ana@example.com", "secret12", "María", "Ana2")
                         .replace("1990-05-01", "not-a-date")));
     }
