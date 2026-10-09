@@ -11,6 +11,7 @@ import com.foodcourt.user.domain.exception.IdentityDocumentAlreadyRegistered;
 import com.foodcourt.user.domain.model.EmailAddress;
 import com.foodcourt.user.domain.model.NewOwner;
 import com.foodcourt.user.domain.model.OwnerAge;
+import com.foodcourt.user.domain.model.PersonName;
 import com.foodcourt.user.domain.model.Role;
 import com.foodcourt.user.domain.model.User;
 import com.foodcourt.user.domain.spi.PasswordHasher;
@@ -18,7 +19,7 @@ import com.foodcourt.user.domain.spi.UserRepository;
 
 /**
  * Creates an owner account. Checks run in this order, and a rejection does not save:
- * adult, unique email, unique identity document, then bcrypt, then insert.
+ * first name, last name, adult, unique email, unique identity document, then bcrypt, then insert.
  * The role is always {@link Role#OWNER} and {@code restaurantId} stays null.
  */
 @Service
@@ -36,10 +37,16 @@ public final class CreateOwnerUseCase implements CreateOwner {
 
     @Override
     public User create(NewOwner owner) {
+        PersonName firstName = requireName(owner.firstName());
+        PersonName lastName = requireName(owner.lastName());
         requireAdult(owner);
         rejectDuplicateEmail(owner);
         rejectDuplicateDocument(owner);
-        return users.save(account(owner, passwords.hash(owner.password())));
+        return users.save(account(owner, firstName, lastName, passwords.hash(owner.password())));
+    }
+
+    private static PersonName requireName(String name) {
+        return new PersonName(name);
     }
 
     private void requireAdult(NewOwner owner) {
@@ -58,11 +65,11 @@ public final class CreateOwnerUseCase implements CreateOwner {
         }
     }
 
-    private static User account(NewOwner owner, String passwordHash) {
+    private static User account(NewOwner owner, PersonName firstName, PersonName lastName, String passwordHash) {
         return new User(
                 null,
-                owner.firstName(),
-                owner.lastName(),
+                firstName.value(),
+                lastName.value(),
                 owner.identityDocument(),
                 owner.phone(),
                 owner.birthDate(),

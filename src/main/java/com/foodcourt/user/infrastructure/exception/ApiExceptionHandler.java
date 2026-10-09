@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.foodcourt.user.domain.exception.EmailAlreadyRegistered;
+import com.foodcourt.user.domain.exception.InvalidPersonName;
 import com.foodcourt.user.domain.exception.IdentityDocumentAlreadyRegistered;
 import com.foodcourt.user.domain.exception.UnderageOwner;
 import com.foodcourt.user.domain.exception.UserNotFound;
@@ -24,6 +25,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(UserNotFound.class)
     ProblemDetail missing(UserNotFound exception, HttpServletRequest request) {
         return problem(HttpStatus.NOT_FOUND, "User not found", exception, request);
+    }
+
+    @ExceptionHandler(InvalidPersonName.class)
+    ProblemDetail invalidName(InvalidPersonName exception, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_REQUEST, "Invalid person name", exception, request);
     }
 
     @ExceptionHandler(UnderageOwner.class)

@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.foodcourt.user.domain.exception.EmailAlreadyRegistered;
 import com.foodcourt.user.domain.exception.IdentityDocumentAlreadyRegistered;
+import com.foodcourt.user.domain.exception.InvalidPersonName;
 import com.foodcourt.user.domain.exception.UnderageOwner;
 import com.foodcourt.user.domain.model.NewOwner;
 import com.foodcourt.user.domain.model.Role;
@@ -68,6 +69,42 @@ class CreateOwnerUseCaseTest {
         assertThat(stored.getValue().birthDate()).isEqualTo(LocalDate.of(1990, 5, 1));
         assertThat(created.id()).isEqualTo(15L);
         assertThat(created.role()).isEqualTo(Role.OWNER);
+    }
+
+    @Test
+    void createCollapsesSpacesInTheStoredName() {
+        NewOwner owner = new NewOwner(
+                "  María   Ana  ",
+                "  López   2  ",
+                "1234567890",
+                "+573005698325",
+                LocalDate.of(1990, 5, 1),
+                "ana@example.com",
+                RAW_PASSWORD);
+        when(passwords.hash(RAW_PASSWORD)).thenReturn(PASSWORD_HASH);
+        when(users.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User created = useCase.create(owner);
+
+        assertThat(created.firstName()).isEqualTo("María Ana");
+        assertThat(created.lastName()).isEqualTo("López 2");
+    }
+
+    @Test
+    void createRejectsANameOutsideTheShape() {
+        NewOwner owner = ownerBornOn(LocalDate.of(1990, 5, 1), "ana@example.com");
+        NewOwner invalid = new NewOwner(
+                "A",
+                owner.lastName(),
+                owner.identityDocument(),
+                owner.phone(),
+                owner.birthDate(),
+                owner.email(),
+                owner.password());
+
+        assertThatThrownBy(() -> useCase.create(invalid)).isInstanceOf(InvalidPersonName.class);
+        verify(users, never()).save(any());
+        verify(passwords, never()).hash(any());
     }
 
     @Test
