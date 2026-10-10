@@ -16,5 +16,7 @@ class BCryptPasswordHasherTest {
 
         assertThat(hash).isNotEqualTo("secret12");
         assertThat(encoder.matches("secret12", hash)).isTrue();
+        assertThat(hasher.matches("secret12", hash)).isTrue();
+        assertThat(hasher.matches("other-secret", hash)).isFalse();
     }
 }

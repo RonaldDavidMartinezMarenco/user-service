@@ -10,13 +10,25 @@ import com.foodcourt.user.domain.spi.PasswordHasher;
 public final class BCryptPasswordHasher implements PasswordHasher {
 
     private final PasswordEncoder passwordEncoder;
+    private final String unknownHash;
 
     public BCryptPasswordHasher(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
+        this.unknownHash = passwordEncoder.encode("unknown-account");
     }
 
     @Override
     public String hash(String rawPassword) {
         return passwordEncoder.encode(rawPassword);
+    }
+
+    @Override
+    public boolean matches(String rawPassword, String passwordHash) {
+        return passwordEncoder.matches(rawPassword, passwordHash);
+    }
+
+    @Override
+    public void matchesUnknown(String rawPassword) {
+        passwordEncoder.matches(rawPassword, unknownHash);
     }
 }

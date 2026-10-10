@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.foodcourt.user.domain.exception.EmailAlreadyRegistered;
 import com.foodcourt.user.domain.exception.IdentityDocumentAlreadyRegistered;
+import com.foodcourt.user.domain.model.Role;
 import com.foodcourt.user.domain.model.User;
 import com.foodcourt.user.domain.spi.UserRepository;
 import com.foodcourt.user.infrastructure.output.jpa.entity.UserEntity;
@@ -39,6 +40,18 @@ public class UserRepositoryAdapter implements UserRepository {
     @Transactional(readOnly = true)
     public Optional<User> findById(long id) {
         return accounts.findById(id).map(mapper::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<User> findByEmail(String email) {
+        return accounts.findByEmail(email).map(mapper::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByRole(Role role) {
+        return accounts.existsByRoleId(role.id());
     }
 
     @Override

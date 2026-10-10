@@ -19,10 +19,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.foodcourt.user.domain.exception.AccessDenied;
 import com.foodcourt.user.domain.exception.EmailAlreadyRegistered;
 import com.foodcourt.user.domain.exception.IdentityDocumentAlreadyRegistered;
 import com.foodcourt.user.domain.exception.InvalidPersonName;
 import com.foodcourt.user.domain.exception.UnderageOwner;
+import com.foodcourt.user.domain.model.Caller;
 import com.foodcourt.user.domain.model.NewOwner;
 import com.foodcourt.user.domain.model.Role;
 import com.foodcourt.user.domain.model.User;
@@ -33,6 +35,7 @@ import com.foodcourt.user.domain.spi.UserRepository;
 class CreateOwnerUseCaseTest {
 
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-10-08T15:00:00Z"), ZoneOffset.UTC);
+    private static final Caller ADMINISTRATOR = new Caller(1L, Role.ADMINISTRATOR);
     private static final String RAW_PASSWORD = "secret12";
     private static final String PASSWORD_HASH = "hashed-secret12";
 
@@ -55,7 +58,7 @@ class CreateOwnerUseCaseTest {
         when(passwords.hash(RAW_PASSWORD)).thenReturn(PASSWORD_HASH);
         when(users.save(any(User.class))).thenAnswer(invocation -> withId(invocation.getArgument(0)));
 
-        User created = useCase.create(owner);
+        User created = useCase.create(ADMINISTRATOR, owner);
 
         ArgumentCaptor<User> stored = ArgumentCaptor.forClass(User.class);
         verify(users).save(stored.capture());
@@ -84,7 +87,7 @@ class CreateOwnerUseCaseTest {
         when(passwords.hash(RAW_PASSWORD)).thenReturn(PASSWORD_HASH);
         when(users.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        User created = useCase.create(owner);
+        User created = useCase.create(ADMINISTRATOR, owner);
 
         assertThat(created.firstName()).isEqualTo("María Ana");
         assertThat(created.lastName()).isEqualTo("López 2");
@@ -102,7 +105,7 @@ class CreateOwnerUseCaseTest {
                 owner.email(),
                 owner.password());
 
-        assertThatThrownBy(() -> useCase.create(invalid)).isInstanceOf(InvalidPersonName.class);
+        assertThatThrownBy(() -> useCase.create(ADMINISTRATOR, invalid)).isInstanceOf(InvalidPersonName.class);
         verify(users, never()).save(any());
         verify(passwords, never()).hash(any());
     }
@@ -113,7 +116,7 @@ class CreateOwnerUseCaseTest {
         when(passwords.hash(RAW_PASSWORD)).thenReturn(PASSWORD_HASH);
         when(users.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        User created = useCase.create(owner);
+        User created = useCase.create(ADMINISTRATOR, owner);
 
         assertThat(created.role()).isEqualTo(Role.OWNER);
         assertThat(created.birthDate()).isEqualTo(LocalDate.of(2008, 10, 8));
@@ -124,7 +127,7 @@ class CreateOwnerUseCaseTest {
     void createRejectsSeventeenCompletedYears() {
         NewOwner owner = ownerBornOn(LocalDate.of(2008, 10, 9), "young@example.com");
 
-        assertThatThrownBy(() -> useCase.create(owner)).isInstanceOf(UnderageOwner.class);
+        assertThatThrownBy(() -> useCase.create(ADMINISTRATOR, owner)).isInstanceOf(UnderageOwner.class);
         verify(users, never()).save(any());
         verify(passwords, never()).hash(any());
     }
@@ -133,7 +136,7 @@ class CreateOwnerUseCaseTest {
     void createRejectsAFutureBirthDate() {
         NewOwner owner = ownerBornOn(LocalDate.of(2027, 1, 1), "future@example.com");
 
-        assertThatThrownBy(() -> useCase.create(owner)).isInstanceOf(UnderageOwner.class);
+        assertThatThrownBy(() -> useCase.create(ADMINISTRATOR, owner)).isInstanceOf(UnderageOwner.class);
         verify(users, never()).save(any());
     }
 
@@ -142,9 +145,19 @@ class CreateOwnerUseCaseTest {
         NewOwner owner = ownerBornOn(LocalDate.of(1990, 5, 1), "Ana@Example.com");
         when(users.existsByEmail("ana@example.com")).thenReturn(true);
 
-        assertThatThrownBy(() -> useCase.create(owner)).isInstanceOf(EmailAlreadyRegistered.class);
+        assertThatThrownBy(() -> useCase.create(ADMINISTRATOR, owner)).isInstanceOf(EmailAlreadyRegistered.class);
         verify(users, never()).save(any());
         verify(passwords, never()).hash(any());
+    }
+
+    @Test
+    void createRejectsACallerThatIsNotAnAdministrator() {
+        NewOwner owner = ownerBornOn(LocalDate.of(1990, 5, 1), "ana@example.com");
+
+        assertThatThrownBy(() -> useCase.create(new Caller(9L, Role.OWNER), owner)).isInstanceOf(AccessDenied.class);
+        verify(users, never()).save(any());
+        verify(passwords, never()).hash(any());
+        verify(users, never()).existsByEmail(any());
     }
 
     @Test
@@ -152,7 +165,7 @@ class CreateOwnerUseCaseTest {
         NewOwner owner = ownerBornOn(LocalDate.of(1990, 5, 1), "ana@example.com");
         when(users.existsByIdentityDocument("1234567890")).thenReturn(true);
 
-        assertThatThrownBy(() -> useCase.create(owner))
+        assertThatThrownBy(() -> useCase.create(ADMINISTRATOR, owner))
                 .isInstanceOf(IdentityDocumentAlreadyRegistered.class);
         verify(users, never()).save(any());
         verify(passwords, never()).hash(any());

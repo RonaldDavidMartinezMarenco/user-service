@@ -12,14 +12,16 @@ import com.foodcourt.user.infrastructure.input.rest.mapper.AccountRestMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
- * Reads an account by id. Authentication is added in a later story;
- * until then the security filter permits this call.
+ * Reads an account by id. The access token is required.
+ * An administrator may read any id. Any other caller may read only their own.
  */
 @RestController
 @Tag(name = "Accounts")
+@SecurityRequirement(name = "bearerAuth")
 final class AccountController {
 
     private final FindAccountHandler handler;
@@ -33,6 +35,8 @@ final class AccountController {
     @Operation(summary = "Find an account by id")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Account found"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid access token"),
+            @ApiResponse(responseCode = "403", description = "The caller may not read this account"),
             @ApiResponse(responseCode = "404", description = "No account exists for this id")
     })
     ResponseEntity<AccountResponse> find(@PathVariable long id) {
