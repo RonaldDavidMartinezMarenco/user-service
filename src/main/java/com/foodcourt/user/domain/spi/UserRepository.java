@@ -2,6 +2,7 @@ package com.foodcourt.user.domain.spi;
 
 import java.util.Optional;
 
+import com.foodcourt.user.domain.model.Role;
 import com.foodcourt.user.domain.model.User;
 
 /**
@@ -11,6 +12,10 @@ import com.foodcourt.user.domain.model.User;
 public interface UserRepository {
 
     Optional<User> findById(long id);
+
+    Optional<User> findByEmail(String email);
+
+    boolean existsByRole(Role role);
 
     boolean existsByEmail(String email);
 

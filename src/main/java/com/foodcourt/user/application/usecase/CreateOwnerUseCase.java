@@ -6,8 +6,10 @@ import java.time.LocalDate;
 import org.springframework.stereotype.Service;
 
 import com.foodcourt.user.domain.api.CreateOwner;
+import com.foodcourt.user.domain.exception.AccessDenied;
 import com.foodcourt.user.domain.exception.EmailAlreadyRegistered;
 import com.foodcourt.user.domain.exception.IdentityDocumentAlreadyRegistered;
+import com.foodcourt.user.domain.model.Caller;
 import com.foodcourt.user.domain.model.EmailAddress;
 import com.foodcourt.user.domain.model.NewOwner;
 import com.foodcourt.user.domain.model.OwnerAge;
@@ -19,7 +21,8 @@ import com.foodcourt.user.domain.spi.UserRepository;
 
 /**
  * Creates an owner account. Checks run in this order, and a rejection does not save:
- * first name, last name, adult, unique email, unique identity document, then bcrypt, then insert.
+ * the caller is an administrator, first name, last name, adult, unique email,
+ * unique identity document, then bcrypt, then insert.
  * The role is always {@link Role#OWNER} and {@code restaurantId} stays null.
  */
 @Service
@@ -36,13 +39,20 @@ public final class CreateOwnerUseCase implements CreateOwner {
     }
 
     @Override
-    public User create(NewOwner owner) {
+    public User create(Caller caller, NewOwner owner) {
+        requireAdministrator(caller);
         PersonName firstName = requireName(owner.firstName());
         PersonName lastName = requireName(owner.lastName());
         requireAdult(owner);
         rejectDuplicateEmail(owner);
         rejectDuplicateDocument(owner);
         return users.save(account(owner, firstName, lastName, passwords.hash(owner.password())));
+    }
+
+    private static void requireAdministrator(Caller caller) {
+        if (caller.role() != Role.ADMINISTRATOR) {
+            throw new AccessDenied();
+        }
     }
 
     private static PersonName requireName(String name) {

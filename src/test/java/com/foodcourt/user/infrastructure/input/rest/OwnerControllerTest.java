@@ -6,6 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -24,6 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -38,9 +41,10 @@ import com.foodcourt.user.domain.model.Role;
 import com.foodcourt.user.domain.model.User;
 import com.foodcourt.user.infrastructure.exception.ApiExceptionHandler;
 import com.foodcourt.user.infrastructure.security.SecurityConfig;
+import com.foodcourt.user.infrastructure.security.SecurityProblemHandlers;
 
 @WebMvcTest(OwnerController.class)
-@Import({ApiExceptionHandler.class, SecurityConfig.class})
+@Import({ApiExceptionHandler.class, SecurityConfig.class, SecurityProblemHandlers.class})
 class OwnerControllerTest {
 
     @Autowired
@@ -48,6 +52,9 @@ class OwnerControllerTest {
 
     @MockitoBean
     private CreateOwnerHandler handler;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     @BeforeEach
     void setUp() {
@@ -166,8 +173,32 @@ class OwnerControllerTest {
                         .replace("1990-05-01", "not-a-date")));
     }
 
+    @Test
+    void createRejectsAMissingToken() throws Exception {
+        mockMvc.perform(post("/owners")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validBody("ana@example.com", "secret12", "María", "Ana2")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Unauthorized"))
+                .andExpect(jsonPath("$.detail").value("Authentication is required"));
+        verify(handler, never()).create(any());
+    }
+
+    @Test
+    void createRejectsANonAdministrator() throws Exception {
+        mockMvc.perform(post("/owners")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OWNER")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validBody("ana@example.com", "secret12", "María", "Ana2")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.detail").value("You do not have permission for this action"));
+        verify(handler, never()).create(any());
+    }
+
     private ResultActions postOwner(String body) throws Exception {
         return mockMvc.perform(post("/owners")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
     }

@@ -12,18 +12,25 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.foodcourt.user.domain.api.CreateOwner;
+import com.foodcourt.user.domain.model.Caller;
 import com.foodcourt.user.domain.model.NewOwner;
 import com.foodcourt.user.domain.model.Role;
 import com.foodcourt.user.domain.model.User;
+import com.foodcourt.user.domain.spi.CurrentCaller;
 
 @ExtendWith(MockitoExtension.class)
 class CreateOwnerHandlerTest {
 
+    private static final Caller ADMINISTRATOR = new Caller(1L, Role.ADMINISTRATOR);
+
     @Mock
     private CreateOwner createOwner;
 
+    @Mock
+    private CurrentCaller currentCaller;
+
     @Test
-    void createForwardsTheOwnerAndReturnsTheStoredAccount() {
+    void createForwardsTheCallerAndTheOwner() {
         NewOwner incoming = new NewOwner(
                 "María",
                 "Ana2",
@@ -43,12 +50,13 @@ class CreateOwnerHandlerTest {
                 "hashed-secret12",
                 Role.OWNER,
                 null);
-        when(createOwner.create(incoming)).thenReturn(stored);
-        CreateOwnerHandler handler = new CreateOwnerHandler(createOwner);
+        when(currentCaller.require()).thenReturn(ADMINISTRATOR);
+        when(createOwner.create(ADMINISTRATOR, incoming)).thenReturn(stored);
+        CreateOwnerHandler handler = new CreateOwnerHandler(createOwner, currentCaller);
 
         User result = handler.create(incoming);
 
         assertThat(result).isEqualTo(stored);
-        verify(createOwner).create(incoming);
+        verify(createOwner).create(ADMINISTRATOR, incoming);
     }
 }

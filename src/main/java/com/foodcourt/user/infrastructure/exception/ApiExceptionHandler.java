@@ -7,7 +7,10 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.foodcourt.user.domain.exception.AccessDenied;
+import com.foodcourt.user.domain.exception.AuthenticationRequired;
 import com.foodcourt.user.domain.exception.EmailAlreadyRegistered;
+import com.foodcourt.user.domain.exception.InvalidCredentials;
 import com.foodcourt.user.domain.exception.InvalidPersonName;
 import com.foodcourt.user.domain.exception.IdentityDocumentAlreadyRegistered;
 import com.foodcourt.user.domain.exception.UnderageOwner;
@@ -21,6 +24,21 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(InvalidCredentials.class)
+    ProblemDetail invalidCredentials(InvalidCredentials exception, HttpServletRequest request) {
+        return problem(HttpStatus.UNAUTHORIZED, "Invalid credentials", exception, request);
+    }
+
+    @ExceptionHandler(AuthenticationRequired.class)
+    ProblemDetail authenticationRequired(AuthenticationRequired exception, HttpServletRequest request) {
+        return problem(HttpStatus.UNAUTHORIZED, "Unauthorized", exception, request);
+    }
+
+    @ExceptionHandler(AccessDenied.class)
+    ProblemDetail accessDenied(AccessDenied exception, HttpServletRequest request) {
+        return problem(HttpStatus.FORBIDDEN, "Forbidden", exception, request);
+    }
 
     @ExceptionHandler(UserNotFound.class)
     ProblemDetail missing(UserNotFound exception, HttpServletRequest request) {

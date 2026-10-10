@@ -2,6 +2,8 @@ package com.foodcourt.user.application.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -15,7 +17,9 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.foodcourt.user.domain.exception.AccessDenied;
 import com.foodcourt.user.domain.exception.UserNotFound;
+import com.foodcourt.user.domain.model.Caller;
 import com.foodcourt.user.domain.model.Role;
 import com.foodcourt.user.domain.model.User;
 import com.foodcourt.user.domain.spi.UserRepository;
@@ -25,6 +29,8 @@ class FindAccountUseCaseTest {
 
     @Mock
     private UserRepository users;
+
+    private static final Caller ADMINISTRATOR = new Caller(1L, Role.ADMINISTRATOR);
 
     private FindAccountUseCase useCase;
 
@@ -38,7 +44,7 @@ class FindAccountUseCaseTest {
     void findReturnsTheStoredRole(Role role) {
         when(users.findById(15L)).thenReturn(Optional.of(account(role)));
 
-        User found = useCase.find(15L);
+        User found = useCase.find(ADMINISTRATOR, 15L);
 
         assertThat(found.id()).isEqualTo(15L);
         assertThat(found.role()).isEqualTo(role);
@@ -48,7 +54,23 @@ class FindAccountUseCaseTest {
     void findRejectsAMissingAccount() {
         when(users.findById(15L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.find(15L)).isInstanceOf(UserNotFound.class);
+        assertThatThrownBy(() -> useCase.find(ADMINISTRATOR, 15L)).isInstanceOf(UserNotFound.class);
+    }
+
+    @Test
+    void findReturnsTheCallersOwnAccount() {
+        when(users.findById(15L)).thenReturn(Optional.of(account(Role.OWNER)));
+
+        User found = useCase.find(new Caller(15L, Role.OWNER), 15L);
+
+        assertThat(found.id()).isEqualTo(15L);
+        assertThat(found.role()).isEqualTo(Role.OWNER);
+    }
+
+    @Test
+    void findRejectsAnotherAccountForANonAdministrator() {
+        assertThatThrownBy(() -> useCase.find(new Caller(9L, Role.OWNER), 15L)).isInstanceOf(AccessDenied.class);
+        verify(users, never()).findById(15L);
     }
 
     private static User account(Role role) {
