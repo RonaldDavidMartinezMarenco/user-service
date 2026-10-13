@@ -2,7 +2,7 @@ package com.foodcourt.user.domain.model;
 
 /**
  * Account role stored as {@code role.id} in {@code user_db}.
- * Creating an owner always assigns {@link #OWNER}.
+ * Creating an owner always assigns {@link #OWNER}; creating an employee requires {@link #EMPLOYEE}.
  */
 public enum Role {
     ADMINISTRATOR((short) 1),

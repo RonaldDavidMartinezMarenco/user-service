@@ -15,7 +15,7 @@ import jakarta.persistence.Table;
 /**
  * Row of {@code app_user}. Text columns use {@link SqlTypes#LONGVARCHAR} so they
  * match PostgreSQL {@code text}. {@code birth_date} stays nullable because only
- * an owner must have one. {@code restaurant_id} stays null for an owner.
+ * an owner must have one. {@code restaurant_id} is set only for an employee.
  */
 @Entity
 @Table(name = "app_user")

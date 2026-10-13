@@ -1,5 +1,6 @@
 package com.foodcourt.user.infrastructure.input.rest;
 
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,6 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -65,6 +68,17 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.title").value("User not found"))
                 .andExpect(jsonPath("$.detail").value("No account exists for this id"))
                 .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"0", "-1"})
+    void findRejectsAnIdThatIsNotPositive(String id) throws Exception {
+        mockMvc.perform(get("/users/" + id).with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRATOR"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Invalid request"))
+                .andExpect(jsonPath("$.status").value(400));
+        verify(handler, never()).find(anyLong());
     }
 
     @Test

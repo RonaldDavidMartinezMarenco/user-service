@@ -1,6 +1,7 @@
 package com.foodcourt.user.infrastructure.input.rest;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,15 +15,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Positive;
 
 /**
  * Reads an account by id. The access token is required.
  * An administrator may read any id. Any other caller may read only their own.
+ * The class is not final: {@code @Validated} needs a CGLIB subclass.
  */
 @RestController
+@Validated
 @Tag(name = "Accounts")
 @SecurityRequirement(name = "bearerAuth")
-final class AccountController {
+class AccountController {
 
     private final FindAccountHandler handler;
     private final AccountRestMapper mapper = new AccountRestMapper();
@@ -35,11 +39,12 @@ final class AccountController {
     @Operation(summary = "Find an account by id")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Account found"),
+            @ApiResponse(responseCode = "400", description = "Invalid id"),
             @ApiResponse(responseCode = "401", description = "Missing or invalid access token"),
             @ApiResponse(responseCode = "403", description = "The caller may not read this account"),
             @ApiResponse(responseCode = "404", description = "No account exists for this id")
     })
-    ResponseEntity<AccountResponse> find(@PathVariable long id) {
+    ResponseEntity<AccountResponse> find(@PathVariable @Positive long id) {
         return ResponseEntity.ok(mapper.toResponse(handler.find(id)));
     }
 }
