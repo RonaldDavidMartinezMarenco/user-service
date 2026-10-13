@@ -22,6 +22,8 @@ foodcourt:
   security:
     jwt-secret: ${JWT_SECRET}
     jwt-ttl: ${JWT_TTL:PT8H}
+  clients:
+    plaza-service-url: ${PLAZA_SERVICE_URL:http://localhost:8082}
   bootstrap:
     admin-first-name: ${BOOTSTRAP_ADMIN_FIRST_NAME}
     admin-last-name: ${BOOTSTRAP_ADMIN_LAST_NAME}
