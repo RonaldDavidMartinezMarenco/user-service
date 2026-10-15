@@ -15,6 +15,9 @@ import com.foodcourt.user.infrastructure.input.rest.dto.OwnerResponse;
 import com.foodcourt.user.infrastructure.input.rest.mapper.OwnerRestMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -46,7 +49,22 @@ class OwnerController {
             @ApiResponse(responseCode = "409", description = "Email or identity document already registered")
     })
     @PreAuthorize("hasRole('ADMINISTRATOR')")
-    public ResponseEntity<OwnerResponse> create(@Valid @RequestBody CreateOwnerRequest request) {
+    public ResponseEntity<OwnerResponse> create(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = CreateOwnerRequest.class),
+                    examples = @ExampleObject(name = "New owner", value = """
+                            {
+                              "firstName": "Diana",
+                              "lastName": "Morales",
+                              "identityDocument": "1040404040",
+                              "phone": "+573001110004",
+                              "birthDate": "1992-06-15",
+                              "email": "diana.morales@example.com",
+                              "password": "Password123"
+                            }
+                            """)))
+            @Valid @RequestBody CreateOwnerRequest request) {
         User owner = handler.create(mapper.toNewOwner(request));
         URI location = URI.create("/owners/" + owner.id());
         return ResponseEntity.created(location).body(mapper.toResponse(owner));

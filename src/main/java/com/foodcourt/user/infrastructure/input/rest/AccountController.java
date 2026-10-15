@@ -11,6 +11,7 @@ import com.foodcourt.user.infrastructure.input.rest.dto.AccountResponse;
 import com.foodcourt.user.infrastructure.input.rest.mapper.AccountRestMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -44,7 +45,9 @@ class AccountController {
             @ApiResponse(responseCode = "403", description = "The caller may not read this account"),
             @ApiResponse(responseCode = "404", description = "No account exists for this id")
     })
-    ResponseEntity<AccountResponse> find(@PathVariable @Positive long id) {
+    ResponseEntity<AccountResponse> find(
+            @Parameter(description = "Carlos Ramírez after the seed", example = "2")
+            @PathVariable @Positive long id) {
         return ResponseEntity.ok(mapper.toResponse(handler.find(id)));
     }
 }
