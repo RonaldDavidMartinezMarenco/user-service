@@ -42,12 +42,13 @@ import com.foodcourt.user.domain.exception.RestaurantNotFound;
 import com.foodcourt.user.domain.model.NewEmployee;
 import com.foodcourt.user.domain.model.Role;
 import com.foodcourt.user.domain.model.User;
+import com.foodcourt.user.infrastructure.config.JacksonConfig;
 import com.foodcourt.user.infrastructure.exception.ApiExceptionHandler;
 import com.foodcourt.user.infrastructure.security.SecurityConfig;
 import com.foodcourt.user.infrastructure.security.SecurityProblemHandlers;
 
 @WebMvcTest(EmployeeController.class)
-@Import({ApiExceptionHandler.class, SecurityConfig.class, SecurityProblemHandlers.class})
+@Import({ApiExceptionHandler.class, SecurityConfig.class, SecurityProblemHandlers.class, JacksonConfig.class})
 class EmployeeControllerTest {
 
     @Autowired
@@ -210,7 +211,9 @@ class EmployeeControllerTest {
                 Arguments.of("missing restaurant", validBody().replace(",\n  \"restaurantId\": 8", "")),
                 Arguments.of("restaurant id zero", validBody().replace("\"restaurantId\": 8", "\"restaurantId\": 0")),
                 Arguments.of("negative restaurant id", validBody().replace("\"restaurantId\": 8", "\"restaurantId\": -1")),
-                Arguments.of("role that is not a number", validBody().replace("\"roleId\": 3", "\"roleId\": \"EMPLOYEE\"")));
+                Arguments.of("role that is not a number", validBody().replace("\"roleId\": 3", "\"roleId\": \"EMPLOYEE\"")),
+                Arguments.of("role id as text", validBody().replace("\"roleId\": 3", "\"roleId\": \"3\"")),
+                Arguments.of("role id as a decimal", validBody().replace("\"roleId\": 3", "\"roleId\": 3.0")));
     }
 
     private ResultActions postEmployee(String body) throws Exception {
