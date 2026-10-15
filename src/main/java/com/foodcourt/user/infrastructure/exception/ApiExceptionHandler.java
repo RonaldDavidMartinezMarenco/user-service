@@ -9,11 +9,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.foodcourt.user.domain.exception.AccessDenied;
 import com.foodcourt.user.domain.exception.AuthenticationRequired;
+import com.foodcourt.user.domain.exception.CustomerRoleRequired;
 import com.foodcourt.user.domain.exception.EmailAlreadyRegistered;
 import com.foodcourt.user.domain.exception.EmployeeRoleRequired;
 import com.foodcourt.user.domain.exception.InvalidCredentials;
 import com.foodcourt.user.domain.exception.InvalidPersonName;
 import com.foodcourt.user.domain.exception.IdentityDocumentAlreadyRegistered;
+import com.foodcourt.user.domain.exception.PasswordTooLong;
 import com.foodcourt.user.domain.exception.RestaurantDirectoryUnavailable;
 import com.foodcourt.user.domain.exception.RestaurantNotFound;
 import com.foodcourt.user.domain.exception.UnderageOwner;
@@ -77,6 +79,16 @@ public class ApiExceptionHandler {
     @ExceptionHandler(EmployeeRoleRequired.class)
     ProblemDetail wrongRole(EmployeeRoleRequired exception, HttpServletRequest request) {
         return problem(HttpStatus.BAD_REQUEST, "Employee role required", exception, request);
+    }
+
+    @ExceptionHandler(CustomerRoleRequired.class)
+    ProblemDetail wrongCustomerRole(CustomerRoleRequired exception, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_REQUEST, "Customer role required", exception, request);
+    }
+
+    @ExceptionHandler(PasswordTooLong.class)
+    ProblemDetail passwordTooLong(PasswordTooLong exception, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_REQUEST, "Password too long", exception, request);
     }
 
     @ExceptionHandler(RestaurantNotFound.class)

@@ -13,7 +13,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
 /**
- * Stateless bearer authentication. Login and the OpenAPI pages stay public.
+ * Stateless bearer authentication. Login, customer registration, and the OpenAPI pages stay public.
  * Every other route requires a valid access token. Role checks also live on the controllers.
  */
 @Configuration
@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/customers").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors
