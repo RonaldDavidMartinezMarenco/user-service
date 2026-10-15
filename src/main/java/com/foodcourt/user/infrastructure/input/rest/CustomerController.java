@@ -14,6 +14,9 @@ import com.foodcourt.user.infrastructure.input.rest.dto.CustomerResponse;
 import com.foodcourt.user.infrastructure.input.rest.mapper.CustomerRestMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,7 +45,22 @@ final class CustomerController {
             @ApiResponse(responseCode = "409", description = "Email or identity document already registered"),
             @ApiResponse(responseCode = "415", description = "The body is not JSON")
     })
-    public ResponseEntity<CustomerResponse> create(@Valid @RequestBody CreateCustomerRequest request) {
+    public ResponseEntity<CustomerResponse> create(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = CreateCustomerRequest.class),
+                    examples = @ExampleObject(name = "New customer", value = """
+                            {
+                              "firstName": "Lucía",
+                              "lastName": "Navarro",
+                              "identityDocument": "3030303030",
+                              "phone": "+573003330003",
+                              "email": "lucia.navarro@example.com",
+                              "password": "Password123",
+                              "roleId": 4
+                            }
+                            """)))
+            @Valid @RequestBody CreateCustomerRequest request) {
         User customer = handler.create(mapper.toNewCustomer(request));
         URI location = URI.create("/users/" + customer.id());
         return ResponseEntity.created(location).body(mapper.toResponse(customer));

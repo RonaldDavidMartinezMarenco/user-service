@@ -15,6 +15,9 @@ import com.foodcourt.user.infrastructure.input.rest.dto.EmployeeResponse;
 import com.foodcourt.user.infrastructure.input.rest.mapper.EmployeeRestMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -49,7 +52,23 @@ class EmployeeController {
             @ApiResponse(responseCode = "503", description = "The plaza service is unavailable")
     })
     @PreAuthorize("hasRole('OWNER')")
-    public ResponseEntity<EmployeeResponse> create(@Valid @RequestBody CreateEmployeeRequest request) {
+    public ResponseEntity<EmployeeResponse> create(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = CreateEmployeeRequest.class),
+                    examples = @ExampleObject(name = "Juan at Sushi Zen", value = """
+                            {
+                              "firstName": "Juan",
+                              "lastName": "Pérez",
+                              "identityDocument": "2050505050",
+                              "phone": "+573009990000",
+                              "email": "juan.perez@example.com",
+                              "password": "Password123",
+                              "roleId": 3,
+                              "restaurantId": 2
+                            }
+                            """)))
+            @Valid @RequestBody CreateEmployeeRequest request) {
         User employee = handler.create(mapper.toNewEmployee(request));
         URI location = URI.create("/employees/" + employee.id());
         return ResponseEntity.created(location).body(mapper.toResponse(employee));
