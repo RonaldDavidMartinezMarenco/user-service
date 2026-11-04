@@ -12,6 +12,9 @@ import com.foodcourt.user.infrastructure.input.rest.mapper.AccountRestMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -39,7 +42,17 @@ class AccountController {
     @GetMapping("/users/{id}")
     @Operation(summary = "Find an account by id")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Account found"),
+            @ApiResponse(responseCode = "200", description = "Account found", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = AccountResponse.class),
+                    examples = {
+                            @ExampleObject(name = "Pedro, employee of La Parrilla", value = """
+                                    { "id": 5, "role": "EMPLOYEE", "restaurantId": 1 }
+                                    """),
+                            @ExampleObject(name = "Carlos, owner", value = """
+                                    { "id": 2, "role": "OWNER", "restaurantId": null }
+                                    """)
+                    })),
             @ApiResponse(responseCode = "400", description = "Invalid id"),
             @ApiResponse(responseCode = "401", description = "Missing or invalid access token"),
             @ApiResponse(responseCode = "403", description = "The caller may not read this account"),

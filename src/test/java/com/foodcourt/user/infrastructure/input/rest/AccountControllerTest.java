@@ -1,5 +1,6 @@
 package com.foodcourt.user.infrastructure.input.rest;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -53,9 +54,22 @@ class AccountControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(15))
                 .andExpect(jsonPath("$.role").value("OWNER"))
+                .andExpect(jsonPath("$.restaurantId").value(nullValue()))
                 .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.passwordHash").doesNotExist())
                 .andExpect(jsonPath("$.email").doesNotExist());
+    }
+
+    @Test
+    void findReturnsTheRestaurantOfAnEmployee() throws Exception {
+        when(handler.find(5L)).thenReturn(storedEmployee());
+
+        mockMvc.perform(get("/users/5").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_EMPLOYEE"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(5))
+                .andExpect(jsonPath("$.role").value("EMPLOYEE"))
+                .andExpect(jsonPath("$.restaurantId").value(1))
+                .andExpect(jsonPath("$.passwordHash").doesNotExist());
     }
 
     @Test
@@ -101,5 +115,19 @@ class AccountControllerTest {
                 "hashed-secret12",
                 Role.OWNER,
                 null);
+    }
+
+    private static User storedEmployee() {
+        return new User(
+                5L,
+                "Pedro",
+                "Martínez",
+                "2010101010",
+                "+573002220001",
+                null,
+                "pedro.martinez@example.com",
+                "hashed-secret12",
+                Role.EMPLOYEE,
+                1L);
     }
 }
