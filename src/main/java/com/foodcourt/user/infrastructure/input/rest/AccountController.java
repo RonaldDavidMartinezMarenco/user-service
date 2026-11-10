@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.foodcourt.user.application.handler.FindAccountHandler;
+import com.foodcourt.user.application.handler.FindCustomerPhoneHandler;
 import com.foodcourt.user.infrastructure.input.rest.dto.AccountResponse;
+import com.foodcourt.user.infrastructure.input.rest.dto.CustomerPhoneResponse;
 import com.foodcourt.user.infrastructure.input.rest.mapper.AccountRestMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,10 +35,12 @@ import jakarta.validation.constraints.Positive;
 class AccountController {
 
     private final FindAccountHandler handler;
+    private final FindCustomerPhoneHandler phones;
     private final AccountRestMapper mapper = new AccountRestMapper();
 
-    AccountController(FindAccountHandler handler) {
+    AccountController(FindAccountHandler handler, FindCustomerPhoneHandler phones) {
         this.handler = handler;
+        this.phones = phones;
     }
 
     @GetMapping("/users/{id}")
@@ -62,5 +66,25 @@ class AccountController {
             @Parameter(description = "Carlos Ramírez after the seed", example = "2")
             @PathVariable @Positive long id) {
         return ResponseEntity.ok(mapper.toResponse(handler.find(id)));
+    }
+
+    @GetMapping("/users/{id}/phone")
+    @Operation(summary = "Read a customer's phone")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Customer phone", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = CustomerPhoneResponse.class),
+                    examples = @ExampleObject(name = "Ronald", value = """
+                            { "phone": "+573011590640" }
+                            """))),
+            @ApiResponse(responseCode = "400", description = "Invalid id"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid access token"),
+            @ApiResponse(responseCode = "403", description = "The caller may not read this phone"),
+            @ApiResponse(responseCode = "404", description = "No customer exists for this id")
+    })
+    ResponseEntity<CustomerPhoneResponse> phone(
+            @Parameter(description = "Ronald Martínez after the seed", example = "9")
+            @PathVariable @Positive long id) {
+        return ResponseEntity.ok(mapper.toPhone(phones.find(id)));
     }
 }

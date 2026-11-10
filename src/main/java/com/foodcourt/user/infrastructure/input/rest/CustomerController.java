@@ -49,13 +49,13 @@ final class CustomerController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = CreateCustomerRequest.class),
-                    examples = @ExampleObject(name = "New customer", value = """
+                    examples = @ExampleObject(name = "Ronald", value = """
                             {
-                              "firstName": "Lucía",
-                              "lastName": "Navarro",
-                              "identityDocument": "3030303030",
-                              "phone": "+573003330003",
-                              "email": "lucia.navarro@example.com",
+                              "firstName": "Ronald",
+                              "lastName": "Martínez",
+                              "identityDocument": "3011590640",
+                              "phone": "+573011590640",
+                              "email": "ronald.martinez@example.com",
                               "password": "Password123",
                               "roleId": 4
                             }
