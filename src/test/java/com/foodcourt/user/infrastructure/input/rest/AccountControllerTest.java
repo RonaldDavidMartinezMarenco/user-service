@@ -26,7 +26,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.foodcourt.user.application.handler.FindAccountHandler;
+import com.foodcourt.user.application.handler.FindCustomerPhoneHandler;
+import com.foodcourt.user.domain.exception.AccessDenied;
 import com.foodcourt.user.domain.exception.UserNotFound;
+import com.foodcourt.user.domain.model.CustomerPhone;
 import com.foodcourt.user.domain.model.Role;
 import com.foodcourt.user.domain.model.User;
 import com.foodcourt.user.infrastructure.exception.ApiExceptionHandler;
@@ -42,6 +45,9 @@ class AccountControllerTest {
 
     @MockitoBean
     private FindAccountHandler handler;
+
+    @MockitoBean
+    private FindCustomerPhoneHandler phones;
 
     @MockitoBean
     private JwtDecoder jwtDecoder;
@@ -93,6 +99,51 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.title").value("Invalid request"))
                 .andExpect(jsonPath("$.status").value(400));
         verify(handler, never()).find(anyLong());
+    }
+
+    @Test
+    void phoneReturnsTheCustomerPhone() throws Exception {
+        when(phones.find(9L)).thenReturn(new CustomerPhone("+573011590640"));
+
+        mockMvc.perform(get("/users/9/phone").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_EMPLOYEE"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phone").value("+573011590640"))
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.passwordHash").doesNotExist());
+    }
+
+    @Test
+    void phoneRejectsAMissingCustomer() throws Exception {
+        when(phones.find(9L)).thenThrow(new UserNotFound());
+
+        mockMvc.perform(get("/users/9/phone").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_EMPLOYEE"))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("No account exists for this id"))
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void phoneRejectsACallerWhoMayNotReadIt() throws Exception {
+        when(phones.find(9L)).thenThrow(new AccessDenied());
+
+        mockMvc.perform(get("/users/9/phone").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OWNER"))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
+    }
+
+    @Test
+    void phoneRejectsAMissingToken() throws Exception {
+        mockMvc.perform(get("/users/9/phone"))
+                .andExpect(status().isUnauthorized());
+        verify(phones, never()).find(9L);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"0", "-1"})
+    void phoneRejectsAnIdThatIsNotPositive(String id) throws Exception {
+        mockMvc.perform(get("/users/" + id + "/phone").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_EMPLOYEE"))))
+                .andExpect(status().isBadRequest());
+        verify(phones, never()).find(anyLong());
     }
 
     @Test
